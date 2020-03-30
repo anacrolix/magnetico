@@ -9,14 +9,13 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
-
-	"github.com/pkg/errors"
-
 	"regexp"
+
+	"github.com/anacrolix/dht/v2/krpc"
+	"github.com/pkg/errors"
 
 	"github.com/anacrolix/missinggo/iter"
 	"github.com/anacrolix/torrent/bencode"
-	"github.com/willf/bloom"
 )
 
 type Message struct {
@@ -66,7 +65,7 @@ type QueryArguments struct {
 	//   - `BFpe`: Bloom Filter (256 bytes) representing all stored peers (leeches) for that
 	//             infohash
 	// Defined in BEP 33 "DHT Scrapes" for `get_peers` queries.
-	Scrape int `bencode:"noseed,omitempty"`
+	Scrape int `bencode:"scrape,omitempty"`
 }
 
 type ResponseValues struct {
@@ -90,10 +89,9 @@ type ResponseValues struct {
 	// below two fields to the "r" dictionary in the response:
 	// Defined in BEP 33 "DHT Scrapes" for responses to `get_peers` queries.
 	// Bloom Filter (256 bytes) representing all stored seeds for that infohash:
-	BFsd *bloom.BloomFilter `bencode:"BFsd,omitempty"`
+	BFsd *krpc.ScrapeBloomFilter `bencode:"BFsd,omitempty"`
 	// Bloom Filter (256 bytes) representing all stored peers (leeches) for that infohash:
-	BFpe *bloom.BloomFilter `bencode:"BFpe,omitempty"`
-	// TODO: write marshallers for those fields above ^^
+	BFpe *krpc.ScrapeBloomFilter `bencode:"BFpe,omitempty"`
 }
 
 type Error struct {

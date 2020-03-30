@@ -6,6 +6,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/anacrolix/dht/v2/krpc"
 	"github.com/boramalper/magnetico/cmd/magneticod/dht/mainline"
 )
 
@@ -17,6 +18,8 @@ type Service interface {
 type Result interface {
 	InfoHash() [20]byte
 	PeerAddrs() []net.TCPAddr
+	BFpe() *krpc.ScrapeBloomFilter
+	BFsd() *krpc.ScrapeBloomFilter
 }
 
 type Manager struct {

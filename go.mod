@@ -3,14 +3,16 @@ module github.com/boramalper/magnetico
 require (
 	github.com/Wessie/appdirs v0.0.0-20141031215813-6573e894f8e2
 	github.com/anacrolix/dht v1.0.1 // indirect
+	github.com/anacrolix/dht/v2 v2.5.1
 	github.com/anacrolix/missinggo v1.2.1
-	github.com/anacrolix/missinggo/v2 v2.4.0 // indirect
-	github.com/anacrolix/torrent v1.14.0
+	github.com/anacrolix/torrent v1.15.0
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/dustin/go-humanize v1.0.0
+	github.com/etcd-io/bbolt v1.3.3 // indirect
 	github.com/google/pprof v0.0.0-20190515194954-54271f7e092f // indirect
 	github.com/gorilla/mux v1.7.4
 	github.com/gorilla/schema v1.1.0
+	github.com/gosuri/uiprogress v0.0.1 // indirect
 	github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6 // indirect
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/kevinburke/go-bindata v3.16.0+incompatible // indirect

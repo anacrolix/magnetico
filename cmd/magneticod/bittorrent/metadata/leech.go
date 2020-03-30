@@ -35,8 +35,14 @@ type extDict struct {
 	Piece   int `bencode:"piece"`
 }
 
-type Leech struct {
+type torrentInit struct {
 	infoHash [20]byte
+	seeds    float64
+	peers    float64
+}
+
+type Leech struct {
+	torrentInit
 	peerAddr *net.TCPAddr
 	ev       LeechEventHandlers
 
@@ -51,17 +57,17 @@ type Leech struct {
 }
 
 type LeechEventHandlers struct {
-	OnSuccess func(Metadata)        // must be supplied. args: metadata
-	OnError   func([20]byte, error) // must be supplied. args: infohash, error
+	OnSuccess func(Metadata)           // must be supplied. args: metadata
+	OnError   func(torrentInit, error) // must be supplied. args: infohash, error
 }
 
-func NewLeech(infoHash [20]byte, peerAddr *net.TCPAddr, clientID []byte, ev LeechEventHandlers) *Leech {
-	l := new(Leech)
-	l.infoHash = infoHash
-	l.peerAddr = peerAddr
+func NewLeech(init torrentInit, peerAddr *net.TCPAddr, clientID []byte, ev LeechEventHandlers) *Leech {
+	l := &Leech{
+		torrentInit: init,
+		peerAddr:    peerAddr,
+		ev:          ev,
+	}
 	copy(l.clientID[:], clientID)
-	l.ev = ev
-
 	return l
 }
 
@@ -427,6 +433,8 @@ func (l *Leech) Do(deadline time.Time) {
 		TotalSize:    totalSize,
 		DiscoveredOn: time.Now().Unix(),
 		Files:        files,
+		Seeds:        l.seeds,
+		Peers:        l.peers,
 	})
 }
 
@@ -454,7 +462,7 @@ func (l *Leech) readExactly(n uint) ([]byte, error) {
 }
 
 func (l *Leech) OnError(err error) {
-	l.ev.OnError(l.infoHash, err)
+	l.ev.OnError(l.torrentInit, err)
 }
 
 // TODO: add bounds checking!

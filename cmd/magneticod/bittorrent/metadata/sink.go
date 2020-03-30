@@ -22,6 +22,8 @@ type Metadata struct {
 	DiscoveredOn int64
 	// Files must be populated for both single-file and multi-file torrents!
 	Files []persistence.File
+
+	Seeds, Peers float64
 }
 
 type Sink struct {
@@ -120,8 +122,16 @@ func (ms *Sink) Sink(res dht.Result) {
 	} else if len(peerAddrs) > 0 {
 		peer := peerAddrs[0]
 		ms.incomingInfoHashes[infoHash] = peerAddrs[1:]
-
-		go NewLeech(infoHash, &peer, ms.PeerID, LeechEventHandlers{
+		init := torrentInit{
+			infoHash: infoHash,
+		}
+		if f := res.BFsd(); f != nil {
+			init.seeds = f.EstimateCount()
+		}
+		if f := res.BFpe(); f != nil {
+			init.peers = f.EstimateCount()
+		}
+		go NewLeech(init, &peer, ms.PeerID, LeechEventHandlers{
 			OnSuccess: ms.flush,
 			OnError:   ms.onLeechError,
 		}).Do(time.Now().Add(ms.deadline))
@@ -159,16 +169,18 @@ func (ms *Sink) flush(result Metadata) {
 	delete(ms.incomingInfoHashes, infoHash)
 }
 
-func (ms *Sink) onLeechError(infoHash [20]byte, err error) {
-	zap.L().Debug("leech error", util.HexField("infoHash", infoHash[:]), zap.Error(err))
+func (ms *Sink) onLeechError(init torrentInit, err error) {
+	zap.L().Debug("leech error", util.HexField("infoHash", init.infoHash[:]), zap.Error(err))
 
 	ms.incomingInfoHashesMx.Lock()
 	defer ms.incomingInfoHashesMx.Unlock()
 
+	infoHash := init.infoHash
+
 	if len(ms.incomingInfoHashes[infoHash]) > 0 {
 		peer := ms.incomingInfoHashes[infoHash][0]
 		ms.incomingInfoHashes[infoHash] = ms.incomingInfoHashes[infoHash][1:]
-		go NewLeech(infoHash, &peer, ms.PeerID, LeechEventHandlers{
+		go NewLeech(init, &peer, ms.PeerID, LeechEventHandlers{
 			OnSuccess: ms.flush,
 			OnError:   ms.onLeechError,
 		}).Do(time.Now().Add(ms.deadline))

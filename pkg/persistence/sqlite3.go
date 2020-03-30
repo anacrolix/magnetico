@@ -35,7 +35,7 @@ func makeSqlite3Database(url_ *url.URL) (Database, error) {
 	// sqlite3 driver, and that escaping is applied to the URL on this side. See issue #240.
 	url_.Scheme = "file"
 	// To ensure that // isn't injected into the URI. The query is still handled.
-	url_.Opaque=url_.Path
+	url_.Opaque = url_.Path
 	db.conn, err = sql.Open("sqlite3", url_.String())
 	if err != nil {
 		return nil, errors.Wrap(err, "sql.Open")
@@ -97,7 +97,10 @@ func (db *sqlite3Database) DoesTorrentExist(infoHash []byte) (bool, error) {
 	return exists, nil
 }
 
-func (db *sqlite3Database) AddNewTorrent(infoHash []byte, name string, files []File) error {
+func (db *sqlite3Database) AddNewTorrent(args AddNewTorrentArgs) error {
+	infoHash := args.InfoHash
+	files := args.Files
+	name := args.Name
 	tx, err := db.conn.Begin()
 	if err != nil {
 		return errors.Wrap(err, "conn.Begin")
@@ -157,13 +160,21 @@ func (db *sqlite3Database) AddNewTorrent(infoHash []byte, name string, files []F
 	}
 
 	res, err := tx.Exec(`
-		INSERT INTO torrents (
-			info_hash,
-			name,
-			total_size,
-			discovered_on
-		) VALUES (?, ?, ?, ?);
-	`, infoHash, name, totalSize, time.Now().Unix())
+			INSERT INTO torrents (
+				info_hash,
+				name,
+				total_size,
+				discovered_on,
+				n_seeders,
+				n_leechers,
+				updated_on
+			) VALUES (?, ?, ?, ?, ?, ?, datetime('now'));`,
+		infoHash,
+		name,
+		totalSize,
+		time.Now().Unix(),
+		args.Seeds,
+		args.Peers)
 	if err != nil {
 		return errors.Wrap(err, "tx.Exec (INSERT OR REPLACE INTO torrents)")
 	}
@@ -267,6 +278,8 @@ func (db *sqlite3Database) QueryTorrents(
 	{{ else }}
 			 , 0
 	{{ end }}
+			 , n_seeders
+			 , n_leechers
 		FROM torrents
 	{{ if .DoJoin }}
 		INNER JOIN (
@@ -338,6 +351,8 @@ func (db *sqlite3Database) QueryTorrents(
 			&torrent.DiscoveredOn,
 			&torrent.NFiles,
 			&torrent.Relevance,
+			&torrent.Seeds,
+			&torrent.Peers,
 		)
 		if err != nil {
 			return nil, err
@@ -375,6 +390,8 @@ func (db *sqlite3Database) GetTorrent(infoHash []byte) (*TorrentMetadata, error)
 			total_size,
 			discovered_on,
 			(SELECT COUNT(*) FROM files WHERE torrent_id = torrents.id) AS n_files
+			n_seeders,
+			n_leechers,
 		FROM torrents
 		WHERE info_hash = ?`,
 		infoHash,
@@ -389,7 +406,7 @@ func (db *sqlite3Database) GetTorrent(infoHash []byte) (*TorrentMetadata, error)
 	}
 
 	var tm TorrentMetadata
-	if err = rows.Scan(&tm.InfoHash, &tm.Name, &tm.Size, &tm.DiscoveredOn, &tm.NFiles); err != nil {
+	if err = rows.Scan(&tm.InfoHash, &tm.Name, &tm.Size, &tm.DiscoveredOn, &tm.NFiles, &tm.Seeds, &tm.Peers); err != nil {
 		return nil, err
 	}
 

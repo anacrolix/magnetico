@@ -115,11 +115,23 @@ func main() {
 			}
 
 		case md := <-metadataSink.Drain():
-			if err := database.AddNewTorrent(md.InfoHash, md.Name, md.Files); err != nil {
+			if err := database.AddNewTorrent(persistence.AddNewTorrentArgs{
+				InfoHash: md.InfoHash,
+				Name:     md.Name,
+				Files:    md.Files,
+				Seeds:    md.Seeds,
+				Peers:    md.Peers,
+			}); err != nil {
 				zap.L().Fatal("Could not add new torrent to the database",
 					util.HexField("infohash", md.InfoHash), zap.Error(err))
 			}
-			zap.L().Info("Fetched!", zap.String("name", md.Name), util.HexField("infoHash", md.InfoHash))
+			zap.L().Info(
+				"Fetched!",
+				zap.String("name", md.Name),
+				util.HexField("infoHash", md.InfoHash),
+				zap.Float64("seeds", md.Seeds),
+				zap.Float64("peers", md.Peers),
+			)
 
 		case <-interruptChan:
 			trawlingManager.Terminate()

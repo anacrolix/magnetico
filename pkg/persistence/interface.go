@@ -4,16 +4,25 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"net/url"
+
+	"github.com/pkg/errors"
 
 	"go.uber.org/zap"
 )
 
+type AddNewTorrentArgs struct {
+	InfoHash []byte
+	Name     string
+	Files    []File
+	Seeds    float64
+	Peers    float64
+}
+
 type Database interface {
 	Engine() databaseEngine
 	DoesTorrentExist(infoHash []byte) (bool, error)
-	AddNewTorrent(infoHash []byte, name string, files []File) error
+	AddNewTorrent(AddNewTorrentArgs) error
 	Close() error
 
 	// GetNumberOfTorrents returns the number of torrents saved in the database. Might be an
@@ -86,6 +95,8 @@ type TorrentMetadata struct {
 	DiscoveredOn int64   `json:"discoveredOn"`
 	NFiles       uint    `json:"nFiles"`
 	Relevance    float64 `json:"relevance"`
+	Seeds        float64 `json:"seeds"`
+	Peers        float64 `json:"peers"`
 }
 
 func (tm *TorrentMetadata) MarshalJSON() ([]byte, error) {

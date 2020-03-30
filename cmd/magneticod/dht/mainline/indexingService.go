@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+
+	"github.com/anacrolix/dht/v2/krpc"
 )
 
 type IndexingService struct {
@@ -34,8 +36,17 @@ type IndexingServiceEventHandlers struct {
 }
 
 type IndexingResult struct {
-	infoHash  [20]byte
-	peerAddrs []net.TCPAddr
+	infoHash   [20]byte
+	peerAddrs  []net.TCPAddr
+	bfpe, bfsd *krpc.ScrapeBloomFilter
+}
+
+func (ir IndexingResult) BFpe() *krpc.ScrapeBloomFilter {
+	return ir.bfpe
+}
+
+func (ir IndexingResult) BFsd() *krpc.ScrapeBloomFilter {
+	return ir.bfsd
 }
 
 func (ir IndexingResult) InfoHash() [20]byte {
@@ -214,6 +225,8 @@ func (is *IndexingService) onGetPeersResponse(msg *Message, addr *net.UDPAddr) {
 	is.eventHandlers.OnResult(IndexingResult{
 		infoHash:  infoHash,
 		peerAddrs: peerAddrs,
+		bfpe:      msg.R.BFpe,
+		bfsd:      msg.R.BFsd,
 	})
 }
 

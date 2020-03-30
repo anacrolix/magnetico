@@ -214,6 +214,7 @@ func NewGetPeersQuery(id []byte, infoHash []byte) *Message {
 		A: QueryArguments{
 			ID:       id,
 			InfoHash: infoHash,
+			Scrape:1,
 		},
 	}
 }
