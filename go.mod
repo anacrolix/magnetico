@@ -3,7 +3,7 @@ module github.com/boramalper/magnetico
 require (
 	github.com/Wessie/appdirs v0.0.0-20141031215813-6573e894f8e2
 	github.com/anacrolix/dht v1.0.1 // indirect
-	github.com/anacrolix/dht/v2 v2.5.1
+	github.com/anacrolix/dht/v2 v2.5.2-0.20200330033022-342c5c4aca9e
 	github.com/anacrolix/missinggo v1.2.1
 	github.com/anacrolix/torrent v1.15.0
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
